@@ -23,7 +23,7 @@
   // ---------- vehicle ----------
   // 3.7 l twin-turbo flat-six, 478 kW (650 PS), 800 Nm, 8-speed PDK, all-wheel drive, 1640 kg
   const P = {
-    m: 1640, g: 9.81, L: 2.45, a: 1.52, b: 0.93, h: 0.45, Iz: 2700, rw: 0.361, final: 3.02,
+    m: 1640, g: 9.81, L: 2.45, a: 1.52, b: 0.93, h: 0.45, Iz: 2000, rw: 0.361, final: 3.02,
     gears: [3.42, 4.89, 3.17, 2.15, 1.56, 1.18, 0.94, 0.76, 0.61],  // index 0 is reverse
     idle: 850, redline: 7200, drag: 0.59, roll: 230,
   };
@@ -37,7 +37,7 @@
   const g4 = [{}, {}, {}, {}];
 
   const wheelRpm = (gear, v) => Math.abs(v) / P.rw * P.gears[gear] * P.final * 60 / (2 * Math.PI);
-  const pacejka = a => Math.sin(1.5 * Math.atan(11 * a));
+  const pacejka = a => Math.sin(1.5 * Math.atan(15 * a));
 
   function shift(to) {
     if (to === S.gear || to < 1 || to > 8) return;
@@ -62,9 +62,9 @@
     const speed = Math.hypot(S.vx, S.vy);
 
     // steering, with less lock as speed rises
-    const maxSteer = Math.min(0.56, 0.02 + P.L * 15 / Math.max(S.vx * S.vx, 1));
+    const maxSteer = Math.min(0.62, 0.03 + P.L * 24 / Math.max(S.vx * S.vx, 1));
     const st = ((left ? 1 : 0) - (right ? 1 : 0)) * (input.steerAnalog !== undefined ? 0 : 1) + (input.steerAnalog || 0);
-    const rate = Math.max(0.22, maxSteer * (st === 0 ? 4.5 : 3.2));
+    const rate = Math.max(0.5, maxSteer * (st === 0 ? 9 : 7.5));
     S.steer += U.clamp(st * maxSteer - S.steer, -rate * dt, rate * dt);
     S.steer = U.clamp(S.steer, -maxSteer, maxSteer);
 
@@ -120,10 +120,10 @@
     if (S.vx > 3) {
       const af = S.steer - Math.atan2(S.vy + P.a * S.r, S.vx);
       const ar = -Math.atan2(S.vy - P.b * S.r, S.vx);
-      const useF = U.clamp((0.4 * Fd + 0.62 * Fb) / (1.15 * mu * Nf), 0, 1);
-      const useR = U.clamp((0.6 * Fd * 0.7 + 0.38 * Fb) / (1.3 * mu * Nr), 0, 1);
-      const Fyf = pacejka(af) * 1.15 * mu * Nf * Math.sqrt(Math.max(0.4, 1 - useF * useF));
-      let Fyr = pacejka(ar) * 1.3 * mu * Nr * Math.sqrt(Math.max(0.45, 1 - useR * useR));
+      const useF = U.clamp((0.4 * Fd + 0.62 * Fb) / (1.34 * mu * Nf), 0, 1);
+      const useR = U.clamp((0.6 * Fd * 0.7 + 0.38 * Fb) / (1.46 * mu * Nr), 0, 1);
+      const Fyf = pacejka(af) * 1.34 * mu * Nf * Math.sqrt(Math.max(0.4, 1 - useF * useF));
+      let Fyr = pacejka(ar) * 1.46 * mu * Nr * Math.sqrt(Math.max(0.45, 1 - useR * useR));
       if (hb) Fyr *= 0.38;
       const cs = Math.cos(S.steer);
       const vyDot = (Fyf * cs + Fyr) / P.m - S.vx * S.r;
@@ -131,7 +131,7 @@
       const vxDot = ax + S.vy * S.r - Fyf * Math.sin(S.steer) / P.m;
       S.vy += vyDot * dt; S.r += rDot * dt; S.vx += vxDot * dt;
       S.ay = (Fyf * cs + Fyr) / P.m;
-      slip = Math.max(slip, U.clamp((Math.max(Math.abs(af), Math.abs(ar)) - 0.085) / 0.14, 0, 1), hb ? U.clamp(speed / 20, 0, 1) : 0);
+      slip = Math.max(slip, U.clamp((Math.max(Math.abs(af), Math.abs(ar)) - 0.075) / 0.12, 0, 1), hb ? U.clamp(speed / 20, 0, 1) : 0);
     } else {
       const rk = S.vx * Math.tan(S.steer) / P.L;
       S.r += (rk - S.r) * Math.min(1, dt * 12);

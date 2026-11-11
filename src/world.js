@@ -446,7 +446,7 @@ const World = (() => {
   }
 
   // ---------- sky ----------
-  const SUN = new THREE.Vector3(-0.52, 0.36, -0.62).normalize();
+  const SUN = new THREE.Vector3(-0.45, 0.62, -0.5).normalize();
   function skyMaterial() {
     return new THREE.ShaderMaterial({
       side: THREE.BackSide, depthWrite: false, fog: false,
@@ -461,16 +461,16 @@ const World = (() => {
         void main(){
           vec3 d = normalize(vDir);
           float e = max(d.y, 0.0);
-          vec3 zen = vec3(0.10, 0.24, 0.55), hor = vec3(0.78, 0.60, 0.42);
+          vec3 zen = vec3(0.09, 0.27, 0.66), hor = vec3(0.62, 0.74, 0.86);
           vec3 c = mix(hor, zen, pow(e, 0.45));
           float sd = max(dot(d, sunDir), 0.0);
-          c += vec3(1.0, 0.55, 0.22) * pow(sd, 6.0) * 0.5;
+          c += vec3(1.0, 0.9, 0.75) * pow(sd, 8.0) * 0.25;
           c += vec3(1.0, 0.8, 0.55) * pow(sd, 60.0) * 0.8;
           c += vec3(1.0, 0.95, 0.85) * smoothstep(0.9993, 0.9997, sd) * 12.0;
           if (d.y > 0.01) {
             vec2 p = d.xz / (d.y + 0.12) * 1.3;
-            float cl = smoothstep(0.5, 0.82, fbm(p + 3.0));
-            vec3 cc = mix(vec3(0.95, 0.72, 0.55), vec3(1.0, 0.95, 0.9), e) * (0.75 + 0.5 * pow(sd, 4.0));
+            float cl = smoothstep(0.42, 0.8, fbm(p + 3.0));
+            vec3 cc = mix(vec3(0.86, 0.88, 0.92), vec3(1.0, 1.0, 1.0), e) * (0.75 + 0.5 * pow(sd, 4.0));
             c = mix(c, cc, cl * smoothstep(0.01, 0.18, d.y) * 0.85);
           }
           c = mix(c, vec3(0.30, 0.30, 0.27), smoothstep(0.0, -0.08, d.y));
@@ -494,15 +494,15 @@ const World = (() => {
     scene.environment = pm.fromScene(envScene, 0.02).texture;
     renderer.toneMapping = tm;
     pm.dispose();
-    scene.fog = new THREE.Fog(new THREE.Color().setRGB(0.70, 0.56, 0.42), 250, 5200);
-    const sun = new THREE.DirectionalLight(0xffdcb0, 1.9);
+    scene.fog = new THREE.Fog(new THREE.Color().setRGB(0.60, 0.72, 0.84), 250, 5200);
+    const sun = new THREE.DirectionalLight(0xfff3df, 2.1);
     sun.castShadow = true;
     sun.shadow.mapSize.set(2048, 2048);
     const sc = sun.shadow.camera;
     sc.left = -45; sc.right = 45; sc.top = 45; sc.bottom = -45; sc.near = 1; sc.far = 400;
     sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.03;
     scene.add(sun, sun.target);
-    scene.add(new THREE.HemisphereLight(0x9db8e8, 0x54482f, 0.55));
+    scene.add(new THREE.HemisphereLight(0xb5cdf0, 0x545046, 0.6));
     return { sky, sun };
   }
 

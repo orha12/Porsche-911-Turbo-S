@@ -11,10 +11,10 @@ const CarModel = (() => {
   const TAIL = -2.005, NOSE = 2.53;
 
   const PAINTS = [
+    { name: 'Shark Blue', color: 0x0456cf, metal: 0.3, rough: 0.3 },
     { name: 'GT Silver Metallic', color: 0x8a8e94, metal: 0.9, rough: 0.3 },
     { name: 'Guards Red', color: 0xc20d1c, metal: 0.25, rough: 0.35 },
     { name: 'Racing Yellow', color: 0xf2c700, metal: 0.25, rough: 0.35 },
-    { name: 'Shark Blue', color: 0x0a63b0, metal: 0.35, rough: 0.33 },
     { name: 'Python Green', color: 0x1f9a4a, metal: 0.35, rough: 0.33 },
     { name: 'Lava Orange', color: 0xee4b0c, metal: 0.3, rough: 0.35 },
     { name: 'Carrara White Metallic', color: 0xe9e9e4, metal: 0.45, rough: 0.3 },
@@ -180,7 +180,7 @@ const CarModel = (() => {
     }
     const segMat = (zm, s) => {
       if (zm > 0.30) return s <= 1 ? GLASS : s === 2 ? PAINT : zm < 0.66 ? GLASS : PAINT;
-      if (zm > -0.62) return s <= 2 ? PAINT : GLASS;
+      if (zm > -0.62) return s === 2 ? PAINT : GLASS;            // gloss black roof, body colour rails
       if (zm > -0.95) return s <= 1 ? GLASS : (s === 3 || s === 4) ? GLASS : PAINT;
       if (zm > -1.30) return s <= 1 ? GLASS : PAINT;
       if (zm < -1.40 && zm > -1.62) return s <= 1 ? TRIM : PAINT; // engine cover grille
@@ -222,11 +222,10 @@ const CarModel = (() => {
     spin.add(lip);
     // ten slim spokes in five pairs, centre-lock hub
     const faceX = hw - 0.035;
-    for (let i = 0; i < 10; i++) {
-      const pair = Math.floor(i / 2), side = i % 2 ? 1 : -1;
-      const ang = pair * (Math.PI * 2 / 5) + side * 0.15;
+    for (let i = 0; i < 20; i++) {
+      const ang = i * (Math.PI * 2 / 20) + (i % 2 ? 0.035 : -0.035);
       const len = rimR - 0.05;
-      const sp = new THREE.Mesh(new THREE.BoxGeometry(0.022, len, 0.028), mats.rim);
+      const sp = new THREE.Mesh(new THREE.BoxGeometry(0.022, len, 0.015), mats.rim);
       sp.position.set(faceX - 0.012, Math.cos(ang) * (0.05 + len / 2), Math.sin(ang) * (0.05 + len / 2));
       sp.rotation.x = ang;
       spin.add(sp);
@@ -273,16 +272,18 @@ const CarModel = (() => {
     root.add(body);
 
     const mats = {
-      paint: new THREE.MeshPhysicalMaterial({ color: PAINTS[0].color, metalness: PAINTS[0].metal, roughness: PAINTS[0].rough, clearcoat: 1, clearcoatRoughness: 0.04, envMapIntensity: 1.25 }),
+      paint: new THREE.MeshPhysicalMaterial({ color: PAINTS[0].color, metalness: PAINTS[0].metal, roughness: PAINTS[0].rough, clearcoat: 1, clearcoatRoughness: 0.04, envMapIntensity: 0.7 }),
       glass: new THREE.MeshPhysicalMaterial({ color: 0x05070a, metalness: 0.9, roughness: 0.04, clearcoat: 1, clearcoatRoughness: 0.02, envMapIntensity: 1.6 }),
       trim: new THREE.MeshStandardMaterial({ color: 0x0c0c0d, metalness: 0.2, roughness: 0.6 }),
       tyre: new THREE.MeshStandardMaterial({ color: 0x0b0b0b, roughness: 0.9, metalness: 0 }),
-      rim: new THREE.MeshStandardMaterial({ color: 0xb9bcc0, metalness: 0.95, roughness: 0.22 }),
-      rimDark: new THREE.MeshStandardMaterial({ color: 0x2a2b2e, metalness: 0.9, roughness: 0.35, side: THREE.DoubleSide }),
+      rim: new THREE.MeshStandardMaterial({ color: 0x3a3c40, metalness: 0.9, roughness: 0.3 }),
+      rimDark: new THREE.MeshStandardMaterial({ color: 0x18191b, metalness: 0.9, roughness: 0.35, side: THREE.DoubleSide }),
       disc: new THREE.MeshStandardMaterial({ color: 0x55585c, metalness: 0.8, roughness: 0.5 }),
       caliper: new THREE.MeshStandardMaterial({ color: 0xf2c200, metalness: 0.3, roughness: 0.4 }),
       chrome: new THREE.MeshStandardMaterial({ color: 0x9a9da2, metalness: 1, roughness: 0.15, side: THREE.DoubleSide }),
-      lens: new THREE.MeshPhysicalMaterial({ color: 0xc9d4dc, metalness: 1, roughness: 0.06, clearcoat: 1, envMapIntensity: 1.5 }),
+      lens: new THREE.MeshPhysicalMaterial({ color: 0x14171b, metalness: 0.9, roughness: 0.05, clearcoat: 1, envMapIntensity: 1.8 }),
+      slat: new THREE.MeshStandardMaterial({ color: 0x2c2e31, metalness: 0.6, roughness: 0.35 }),
+      gloss: new THREE.MeshPhysicalMaterial({ color: 0x08090a, metalness: 0.5, roughness: 0.2, clearcoat: 1 }),
       drl: new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xdfeaff, emissiveIntensity: 1.6 }),
       tail: new THREE.MeshStandardMaterial({ color: 0x5a0000, emissive: 0xff1010, emissiveIntensity: 0.9, roughness: 0.3 }),
       reverse: new THREE.MeshStandardMaterial({ color: 0x888888, emissive: 0xffffff, emissiveIntensity: 0, roughness: 0.3 }),
@@ -332,7 +333,7 @@ const CarModel = (() => {
       add(new THREE.BoxGeometry(0.1, 0.03, 0.03), mats.reverse, sx * 0.3, 0.47, -2.012);
     }
     // rear wing blade and ducktail
-    add(new THREE.BoxGeometry(1.5, 0.03, 0.3), mats.paint, 0, 1.0, -1.79, -0.1, 0, 0);
+    add(new THREE.BoxGeometry(1.5, 0.03, 0.3), mats.gloss, 0, 1.0, -1.79, -0.1, 0, 0);
     add(new THREE.BoxGeometry(1.34, 0.035, 0.22), mats.paint, 0, 0.9, -1.8, -0.22, 0, 0);
     // full-width light bar
     add(new THREE.BoxGeometry(1.52, 0.035, 0.035), mats.tail, 0, 0.765, -2.008);
@@ -340,8 +341,22 @@ const CarModel = (() => {
     const plate = add(new THREE.BoxGeometry(0.52, 0.112, 0.012), new THREE.MeshStandardMaterial({ map: plateTexture(), roughness: 0.6 }), 0, 0.6, -2.024);
     plate.rotation.y = Math.PI;
     // front splitter and intake dividers
-    add(new THREE.BoxGeometry(1.5, 0.025, 0.2), mats.trim, 0, 0.16, 2.4);
-    for (const sx of [1, -1]) add(new THREE.BoxGeometry(0.05, 0.16, 0.2), mats.paint, sx * 0.36, 0.27, 2.47, 0, sx * 0.32, 0);
+    add(new THREE.BoxGeometry(1.56, 0.022, 0.24), mats.gloss, 0, 0.15, 2.4);
+    // nose surface lookup so intake details follow the curved bumper
+    const noseW = (z, y) => { const yb = ybF(z), ys = ysF(z); return hwF(z) * sideProf(U.clamp((y - yb) / (ys - yb), 0, 1)); };
+    const noseZ = (x, y) => { let a = 1.9, b = NOSE; for (let i = 0; i < 24; i++) { const m = (a + b) / 2; if (noseW(m, y) > x) a = m; else b = m; } return a; };
+    const onNose = (geo, mat, x, y, out) => {
+      const z = noseZ(Math.abs(x), y), dz = noseZ(Math.abs(x) + 0.02, y) - noseZ(Math.max(0, Math.abs(x) - 0.02), y);
+      const yaw = Math.atan2(-dz, 0.04) * Math.sign(x || 1);
+      return add(geo, mat, x, y, Math.min(z, NOSE + 0.01) + out, 0, -yaw, 0);
+    };
+    for (const sx of [1, -1]) {
+      // body colour frame around each outer intake, with vertical vanes inside
+      onNose(new THREE.BoxGeometry(0.05, 0.19, 0.06), mats.paint, sx * 0.27, 0.285, 0.0);
+      for (let i = 0; i < 7; i++) onNose(new THREE.BoxGeometry(0.012, 0.15, 0.03), mats.slat, sx * (0.335 + i * 0.047), 0.285, 0.004);
+    }
+    onNose(new THREE.BoxGeometry(0.5, 0.05, 0.05), mats.paint, 0, 0.36, 0.0);
+    for (let i = 0; i < 3; i++) onNose(new THREE.BoxGeometry(0.46, 0.01, 0.03), mats.slat, 0, 0.225 + i * 0.04, 0.012);
 
     // wheels
     const wheels = [];

@@ -29,7 +29,8 @@ Phones and tablets get on-screen buttons.
 ## What is in it
 
 - **The car**: procedural 911 Turbo S body with the fastback roofline, wide rear hips, side intakes, rear wing,
-  full-width light bar, quad exhausts, centre-lock wheels and yellow ceramic brake calipers. Eight paint colours.
+  full-width light bar, quad exhausts, dark multi-spoke wheels, yellow ceramic brake calipers, gloss black roof
+  and vaned front intakes. Shark Blue by default, eight paint colours.
 - **Driving model**: 478 kW and 800 Nm torque curve with turbo lag, 8-speed PDK ratios, all-wheel drive,
   1640 kg with the weight over the rear axle, tyre slip, load transfer and stability control.
   Measured in game: 0 to 100 km/h in about 2.75 s, 0 to 200 km/h in about 8 s, roughly 325 km/h flat out.
