@@ -13,12 +13,27 @@
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
+  const post = Post.create(renderer, isTouch);
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(58, 1, 0.15, 14000);
   const { sky, sun } = World.build(scene, renderer);
   const car = CarModel.build();
   car.root.rotation.order = 'YXZ';
   scene.add(car.root);
+
+  // soft contact shadow that grounds the car
+  (() => {
+    const c = document.createElement('canvas'); c.width = 128; c.height = 256;
+    const x = c.getContext('2d');
+    x.filter = 'blur(14px)';
+    x.fillStyle = '#000';
+    x.beginPath(); x.roundRect(30, 34, 68, 188, 22); x.fill();
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(3.3, 7.2), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(c), transparent: true, opacity: 0.62, depthWrite: false, color: 0x000000, polygonOffset: true, polygonOffsetFactor: -6, polygonOffsetUnits: -6 }));
+    m.rotation.x = -Math.PI / 2;
+    m.position.set(0, 0.03, 0.26);
+    m.renderOrder = 50;
+    car.root.add(m);
+  })();
 
   // ---------- vehicle ----------
   // 3.7 l twin-turbo flat-six, 478 kW (650 PS), 800 Nm, 8-speed PDK, all-wheel drive, 1640 kg
@@ -415,6 +430,7 @@
     else if (code === 'KeyL') { lights = !lights; car.setLights(lights); toast(lights ? 'Headlights on' : 'Headlights off'); }
     else if (code === 'KeyR') reset();
     else if (code === 'KeyM') toast(EngineAudio.toggleMute() ? 'Sound off' : 'Sound on');
+    else if (code === 'KeyV') toast(post.toggle() ? 'Effects on' : 'Effects off');
     else if (code === 'KeyH') $('help').hidden = !$('help').hidden;
     else if (code === 'KeyG') { S.manual = !S.manual; toast(S.manual ? 'Manual: Q shifts down, E shifts up' : 'PDK automatic'); }
     else if (code === 'KeyE' && S.manual && S.gear >= 1) shift(S.gear + 1);
@@ -465,6 +481,7 @@
   function resize() {
     const w = canvas.clientWidth || innerWidth, h = canvas.clientHeight || innerHeight;
     renderer.setSize(w, h, false);
+    post.setSize(w, h);
     camera.aspect = w / h; camera.updateProjectionMatrix();
   }
   addEventListener('resize', resize);
@@ -500,7 +517,7 @@
     EngineAudio.update({ rpm: S.rpm, throttle: S.shiftT > 0 ? 0.15 : S.thr, boost: S.boost, speed: Math.hypot(S.vx, S.vy), slip: S.slip, offroad: S.offroad, shifted, dt });
     drawHud();
     if (toastT > 0) { toastT -= dt; if (toastT <= 0) $('toast').classList.remove('on'); }
-    renderer.render(scene, camera);
+    post.render(scene, camera, U.clamp((Math.hypot(S.vx, S.vy) - 35) / 55, 0, 1));
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);

@@ -193,7 +193,14 @@ const World = (() => {
     geo.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
     geo.setIndex(new THREE.BufferAttribute(idx, 1));
     geo.computeVertexNormals();
-    const mat = new THREE.MeshStandardMaterial({ vertexColors: true, map: noiseTexture(256, 205, 90, 2.5), roughness: 1, metalness: 0, envMapIntensity: 0.35 });
+    const mat = new THREE.MeshStandardMaterial({ vertexColors: true, map: noiseTexture(512, 205, 100, 1.9), roughness: 1, metalness: 0, envMapIntensity: 0.35 });
+    mat.onBeforeCompile = sh => {
+      sh.fragmentShader = sh.fragmentShader.replace('#include <map_fragment>', `
+        #ifdef USE_MAP
+          vec3 d1 = texture2D(map, vUv).rgb, d2 = texture2D(map, vUv * 0.137 + 0.31).rgb, d3 = texture2D(map, vUv * 0.019 + 0.7).rgb;
+          diffuseColor.rgb *= d1 * d2 * d3 * 2.6;
+        #endif`);
+    };
     const mesh = new THREE.Mesh(geo, mat);
     mesh.receiveShadow = true;
     scene.add(mesh);
@@ -219,6 +226,24 @@ const World = (() => {
       x.fillStyle = `rgba(${v},${v * 0.9},${v * 0.7},0.6)`;
       const px = r() < 0.5 ? r() * X0 : X1 + r() * (512 - X1);
       x.fillRect(px, r() * 512, 3, 3);
+    }
+    for (let i = 0; i < 26; i++) {                       // repair patches and stains
+      const v = 20 + r() * 40, pw = 20 + r() * 90, ph = 20 + r() * 120;
+      x.fillStyle = `rgba(${v},${v},${v},${0.06 + r() * 0.1})`;
+      x.fillRect(X0 + r() * (W - pw), r() * 512, pw, ph);
+    }
+    x.strokeStyle = 'rgba(10,10,10,0.5)'; x.lineWidth = 1;
+    for (let i = 0; i < 14; i++) {                       // cracks
+      let cx = X0 + r() * W, cy = r() * 512;
+      x.beginPath(); x.moveTo(cx, cy);
+      for (let k = 0; k < 7; k++) { cx += (r() - 0.5) * 30; cy += (r() - 0.3) * 34; x.lineTo(U.clamp(cx, X0, X1), cy); }
+      x.stroke();
+    }
+    const lanes = type === 'highway' ? [0.09, 0.2, 0.33, 0.44, 0.56, 0.67, 0.8, 0.91] : type === 'runway' ? [] : [0.16, 0.36, 0.64, 0.84];
+    for (const u of lanes) {                             // rubber-darkened wheel tracks
+      const g = x.createLinearGradient(X0 + (u - 0.045) * W, 0, X0 + (u + 0.045) * W, 0);
+      g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(0.5, 'rgba(0,0,0,0.2)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+      x.fillStyle = g; x.fillRect(X0 + (u - 0.045) * W, 0, 0.09 * W, 512);
     }
     const line = (u, w, dashed, color) => {
       x.fillStyle = color || '#e9e9e2';
@@ -399,8 +424,17 @@ const World = (() => {
     }
     const trunkG = new THREE.CylinderGeometry(0.16, 0.24, 2.4, 6);
     trunkG.translate(0, 1.2, 0);
-    const crownG = new THREE.ConeGeometry(1.9, 6.5, 7);
-    crownG.translate(0, 5.0, 0);
+    const tiers = [[2.3, 3.2, 3.0], [1.8, 3.0, 4.9], [1.2, 2.8, 6.7]].map(([rad, hgt, y]) => {
+      const g = new THREE.ConeGeometry(rad, hgt, 9).toNonIndexed();
+      g.rotateY(y); g.translate(0, y, 0);
+      return g;
+    });
+    const crownG = new THREE.BufferGeometry();
+    for (const name of ['position', 'normal']) {
+      const arr = [];
+      for (const g of tiers) arr.push(...g.attributes[name].array);
+      crownG.setAttribute(name, new THREE.Float32BufferAttribute(arr, 3));
+    }
     const trunks = new THREE.InstancedMesh(trunkG, new THREE.MeshStandardMaterial({ color: 0x4a3524, roughness: 1 }), trees.length);
     const crowns = new THREE.InstancedMesh(crownG, new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.95, envMapIntensity: 0.3, flatShading: true }), trees.length);
     const m = new THREE.Matrix4(), q = new THREE.Quaternion(), c = new THREE.Color();
@@ -497,9 +531,10 @@ const World = (() => {
     scene.fog = new THREE.Fog(new THREE.Color().setRGB(0.60, 0.72, 0.84), 250, 5200);
     const sun = new THREE.DirectionalLight(0xfff3df, 2.1);
     sun.castShadow = true;
-    sun.shadow.mapSize.set(2048, 2048);
+    const hi = !('ontouchstart' in window);
+    sun.shadow.mapSize.set(hi ? 4096 : 2048, hi ? 4096 : 2048);
     const sc = sun.shadow.camera;
-    sc.left = -45; sc.right = 45; sc.top = 45; sc.bottom = -45; sc.near = 1; sc.far = 400;
+    sc.left = -60; sc.right = 60; sc.top = 60; sc.bottom = -60; sc.near = 1; sc.far = 400;
     sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.03;
     scene.add(sun, sun.target);
     scene.add(new THREE.HemisphereLight(0xb5cdf0, 0x545046, 0.6));

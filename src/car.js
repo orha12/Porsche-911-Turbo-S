@@ -272,7 +272,7 @@ const CarModel = (() => {
     root.add(body);
 
     const mats = {
-      paint: new THREE.MeshPhysicalMaterial({ color: PAINTS[0].color, metalness: PAINTS[0].metal, roughness: PAINTS[0].rough, clearcoat: 1, clearcoatRoughness: 0.04, envMapIntensity: 0.7 }),
+      paint: new THREE.MeshPhysicalMaterial({ color: PAINTS[0].color, metalness: PAINTS[0].metal, roughness: PAINTS[0].rough, clearcoat: 1, clearcoatRoughness: 0.04, envMapIntensity: 0.5 }),
       glass: new THREE.MeshPhysicalMaterial({ color: 0x05070a, metalness: 0.9, roughness: 0.04, clearcoat: 1, clearcoatRoughness: 0.02, envMapIntensity: 1.6 }),
       trim: new THREE.MeshStandardMaterial({ color: 0x0c0c0d, metalness: 0.2, roughness: 0.6 }),
       tyre: new THREE.MeshStandardMaterial({ color: 0x0b0b0b, roughness: 0.9, metalness: 0 }),
@@ -312,9 +312,9 @@ const CarModel = (() => {
         add(new THREE.BoxGeometry(0.035, 0.012, 0.045), mats.drl, sx * 0.635 + dx, 0.738 - dz * 0.33 + sx * dx * 0.12, 2.19 + dz, 0.33, 0, sx * -0.12);
       }
       // mirrors
-      const mir = add(new THREE.SphereGeometry(1, 16, 12), mats.paint, sx * 1.0, 0.975, 0.66);
+      const mir = add(new THREE.SphereGeometry(1, 16, 12), mats.paint, sx * 0.985, 0.975, 0.66);
       mir.scale.set(0.095, 0.058, 0.07);
-      add(new THREE.BoxGeometry(0.16, 0.022, 0.05), mats.trim, sx * 0.9, 0.93, 0.66, 0, 0, sx * 0.25);
+      add(new THREE.BoxGeometry(0.2, 0.024, 0.05), mats.gloss, sx * 0.89, 0.945, 0.66, 0, 0, sx * 0.12);
       // turbo side intakes ahead of the rear wheels
       add(new THREE.BoxGeometry(0.03, 0.2, 0.26), mats.trim, sx * (hwF(-0.33) - 0.006), 0.6, -0.33, 0.18, sx * 0.12, 0);
       // wing uprights

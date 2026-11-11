@@ -22,6 +22,7 @@ If your browser blocks local files, run `python3 -m http.server` in this folder 
 | G | Manual gearbox (Q down, E up) |
 | R | Back to the runway |
 | M | Mute |
+| V | Visual effects on or off |
 | H | Hide the key list |
 
 Phones and tablets get on-screen buttons.
@@ -45,6 +46,7 @@ Phones and tablets get on-screen buttons.
 - `src/car.js` car model
 - `src/world.js` terrain, roads, city, scenery, sky
 - `src/audio.js` engine and environment sound
+- `src/post.js` bloom, speed blur, tone mapping
 - `src/main.js` physics, cameras, input, HUD
 - `vendor/three.min.js` three.js r149 (MIT licence)
 
