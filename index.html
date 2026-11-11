@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>911 Turbo S Open Road</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700&family=Barlow:wght@400;500&display=swap">
+<style>
+/* Layout: full-bleed driving view; instruments sit bottom right like a cluster, map top right, keys top left. */
+:root {
+  color-scheme: dark;
+  --asphalt: #08090b;
+  --panel: rgba(8, 9, 11, 0.72);
+  --ink: #f1f1ec;
+  --muted: rgba(241, 241, 236, 0.62);
+  --line: rgba(255, 255, 255, 0.18);
+  --pccb: #f2c200;       /* ceramic brake caliper yellow */
+  --redline: #c8102e;
+  --display: "Barlow Condensed", "Arial Narrow", "Helvetica Neue", sans-serif;
+  --body: "Barlow", "Helvetica Neue", Arial, sans-serif;
+}
+[hidden] { display: none !important; }
+html, body { height: 100%; }
+body {
+  margin: 0; overflow: hidden; background: var(--asphalt); color: var(--ink);
+  font-family: var(--body); font-size: 14px;
+  -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; touch-action: none;
+}
+#stage { position: relative; width: 100%; height: 100%; overflow: hidden; }
+#gl { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+.hud { position: absolute; pointer-events: none; opacity: 0; transition: opacity 0.6s; }
+.playing .hud { opacity: 1; }
+#dial { right: max(14px, env(safe-area-inset-right, 0px)); bottom: calc(12px + env(safe-area-inset-bottom, 0px)); width: min(312px, 44vw); height: auto; }
+#map { right: max(16px, env(safe-area-inset-right, 0px)); top: calc(16px + env(safe-area-inset-top, 0px)); width: min(168px, 28vw); height: auto; }
+#help {
+  left: max(16px, env(safe-area-inset-left, 0px)); top: calc(16px + env(safe-area-inset-top, 0px));
+  background: var(--panel); border: 1px solid var(--line); padding: 12px 14px; line-height: 1.75; transition: opacity 0.6s;
+}
+#help.dim { opacity: 0.35; }
+#help b { font-family: var(--display); font-weight: 600; letter-spacing: 0.06em; color: var(--pccb); display: inline-block; min-width: 86px; }
+#toast {
+  position: absolute; left: 50%; top: calc(22px + env(safe-area-inset-top, 0px)); transform: translateX(-50%);
+  font-family: var(--display); font-size: 20px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase;
+  background: var(--panel); border: 1px solid var(--line); padding: 6px 16px; opacity: 0; transition: opacity 0.3s; pointer-events: none; white-space: nowrap;
+}
+#toast.on { opacity: 1; }
+
+#start {
+  position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: flex-end; gap: 14px;
+  padding-block: 28px calc(34px + env(safe-area-inset-bottom, 0px));
+  padding-left: max(28px, env(safe-area-inset-left, 0px)); padding-right: max(28px, env(safe-area-inset-right, 0px));
+  background: linear-gradient(180deg, rgba(8, 9, 11, 0) 35%, rgba(8, 9, 11, 0.86) 82%);
+}
+#start h1 {
+  margin: 0; font-family: var(--display); font-weight: 700; text-transform: uppercase; line-height: 0.9;
+  font-size: clamp(54px, 11vw, 132px); letter-spacing: -0.01em; text-wrap: balance;
+}
+#start h1 span { color: var(--pccb); }
+.specs { display: flex; flex-wrap: wrap; gap: 6px 26px; font-family: var(--display); font-size: 19px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.specs strong { color: var(--ink); font-weight: 600; }
+.row { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 22px; }
+#go {
+  font-family: var(--display); font-size: 24px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase;
+  background: var(--pccb); color: #111; border: 0; padding: 12px 34px; cursor: pointer;
+}
+#go:hover { background: #ffd61f; }
+#go:focus-visible, .tbtn:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+.fine { color: var(--muted); max-width: 62ch; margin: 0; }
+
+/* touch controls */
+.touchui { display: none; }
+.touch.playing .touchui { display: flex; }
+.tgroup { position: absolute; bottom: calc(22px + env(safe-area-inset-bottom, 0px)); gap: 12px; }
+#tl { left: max(18px, env(safe-area-inset-left, 0px)); }
+#tr { right: max(18px, env(safe-area-inset-right, 0px)); bottom: calc(min(250px, 36vw) + env(safe-area-inset-bottom, 0px)); }
+#tt { left: max(18px, env(safe-area-inset-left, 0px)); top: calc(16px + env(safe-area-inset-top, 0px)); bottom: auto; }
+.tbtn {
+  width: 68px; height: 68px; border-radius: 50%; border: 1px solid var(--line); background: var(--panel); color: var(--ink);
+  font-family: var(--display); font-size: 17px; font-weight: 600; letter-spacing: 0.05em; touch-action: none; padding: 0;
+}
+.tbtn.sm { width: 50px; height: 50px; font-size: 13px; }
+.tbtn.on { background: var(--pccb); color: #111; }
+@media (max-width: 720px) { #help { display: none; } }
+</style>
+</head>
+<body>
+<div id="stage">
+  <canvas id="gl"></canvas>
+  <canvas id="dial" class="hud"></canvas>
+  <canvas id="map" class="hud"></canvas>
+  <div id="help" class="hud">
+    <div><b>W A S D</b> or arrow keys to drive</div>
+    <div><b>SPACE</b> handbrake</div>
+    <div><b>W + S</b> launch control from standstill</div>
+    <div><b>C</b> camera, drag the mouse to look around</div>
+    <div><b>P</b> paint &nbsp; <b style="min-width:0">L</b> lights &nbsp; <b style="min-width:0">G</b> manual gearbox</div>
+    <div><b>R</b> reset &nbsp; <b style="min-width:0">M</b> mute &nbsp; <b style="min-width:0">H</b> hide this</div>
+  </div>
+  <div id="toast"></div>
+
+  <div id="tt" class="tgroup touchui">
+    <button class="tbtn sm" id="t-cam" data-act="KeyC">CAM</button>
+    <button class="tbtn sm" id="t-paint" data-act="KeyP">PAINT</button>
+    <button class="tbtn sm" id="t-reset" data-act="KeyR">RESET</button>
+  </div>
+  <div id="tl" class="tgroup touchui">
+    <button class="tbtn" id="t-left" data-key="ArrowLeft">LEFT</button>
+    <button class="tbtn" id="t-right" data-key="ArrowRight">RIGHT</button>
+  </div>
+  <div id="tr" class="tgroup touchui">
+    <button class="tbtn sm" id="t-hb" data-key="Space">HAND</button>
+    <button class="tbtn" id="t-brake" data-key="ArrowDown">BRAKE</button>
+    <button class="tbtn" id="t-gas" data-key="ArrowUp">GAS</button>
+  </div>
+
+  <div id="start">
+    <h1>911 Turbo S<br><span>Open Road</span></h1>
+    <div class="specs">
+      <span><strong>650 PS</strong> twin-turbo flat-six</span>
+      <span><strong>800 Nm</strong></span>
+      <span><strong>8-speed</strong> PDK</span>
+      <span><strong>330 km/h</strong></span>
+    </div>
+    <div class="row">
+      <button id="go">Start engine</button>
+      <p class="fine">Six kilometres of open country: a runway for top speed runs, a ring highway, mountain passes and a city. Sound on. Unofficial fan project, not affiliated with Porsche AG.</p>
+    </div>
+  </div>
+</div>
+<script src="vendor/three.min.js"></script>
+<script src="src/util.js"></script>
+<script src="src/car.js"></script>
+<script src="src/world.js"></script>
+<script src="src/audio.js"></script>
+<script src="src/main.js"></script>
+</body>
+</html>
